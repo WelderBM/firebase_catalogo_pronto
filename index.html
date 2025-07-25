@@ -3,21 +3,41 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Pastas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catálogo</title>
   <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="firebase-config.js"></script>
   <script type="module" src="catalog.js" defer></script>
 </head>
 
 <body>
-<h2>Pastas</h2>
-<div id="folderList" class="folder-list"></div>
+  <div class="main-container">
+    <header class="header">
+      <h1>Catálogo de Produtos</h1>
+      <button onclick="logout()">Sair</button>
+    </header>
 
-<h2>Produtos</h2>
-<div id="itemList" class="item-list"></div>
+    <div class="upload-section">
+      <input type="file" id="jsonInput" accept=".json" />
+    </div>
 
-<input type="file" id="jsonInput" accept=".json">
-<button onclick="logout()">Sair</button>
+    <div class="folders-section">
+      <h2>Pastas</h2>
+      <div id="folderList" class="folder-list"></div>
+    </div>
 
+    <div class="items-section">
+      <h2>Produtos</h2>
+      <div id="itemList" class="item-list"></div>
+    </div>
+  </div>
+
+  <script>
+    function logout() {
+      localStorage.removeItem("auth");
+      window.location.href = "login.html";
+    }
+  </script>
 </body>
 
 </html>
