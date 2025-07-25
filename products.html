@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Produtos</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="container">
+        <h1 id="folderTitle">Produtos</h1>
+        <button onclick="goBack()">← Voltar</button>
+        <div id="itemList" class="product-list"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { firebaseConfig } from "./firebase-config.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const folderId = localStorage.getItem("selectedFolder");
+        if (!folderId) window.location.href = "folders.html";
+        document.getElementById("folderTitle").innerText = "Produtos: " + folderId;
+
+        async function loadItems() {
+            const itemList = document.getElementById("itemList");
+            itemList.innerHTML = "";
+            const folderRef = doc(db, "pastas", folderId);
+            const folderSnap = await getDoc(folderRef);
+            const data = folderSnap.data();
+            if (!data || !data.produtos) return;
+
+            data.produtos.forEach((item, index) => {
+                const div = document.createElement("div");
+                div.className = "item";
+
+                const titleInput = document.createElement("input");
+                titleInput.value = item.title;
+
+                const descInput = document.createElement("textarea");
+                descInput.value = item.description;
+
+                const priceInput = document.createElement("input");
+                priceInput.type = "number";
+                priceInput.value = item.price;
+
+                const saveBtn = document.createElement("button");
+                saveBtn.textContent = "Salvar";
+                saveBtn.onclick = async () => {
+                    data.produtos[index] = {
+                        title: titleInput.value,
+                        description: descInput.value,
+                        price: priceInput.value
+                    };
+                    await setDoc(folderRef, { produtos: data.produtos });
+                    alert("Salvo!");
+                };
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Excluir";
+                deleteBtn.onclick = async () => {
+                    data.produtos.splice(index, 1);
+                    await setDoc(folderRef, { produtos: data.produtos });
+                    loadItems();
+                };
+
+                const titleCopy = document.createElement("button");
+                titleCopy.textContent = "📋 Copiar título";
+                titleCopy.onclick = () => navigator.clipboard.writeText(titleInput.value);
+
+                const descCopy = document.createElement("button");
+                descCopy.textContent = "📋 Copiar descrição";
+                descCopy.onclick = () => navigator.clipboard.writeText(descInput.value);
+
+                const priceCopy = document.createElement("button");
+                priceCopy.textContent = "📋 Copiar preço";
+                priceCopy.onclick = () => navigator.clipboard.writeText(priceInput.value);
+
+                div.append(
+                    titleInput,
+                    titleCopy,
+                    descInput,
+                    descCopy,
+                    priceInput,
+                    priceCopy,
+                    saveBtn,
+                    deleteBtn
+                );
+                itemList.appendChild(div);
+            });
+        }
+
+        loadItems();
+
+        window.goBack = () => {
+            localStorage.removeItem("selectedFolder");
+            window.location.href = "folders.html";
+        };
+    </script>
+</body>
+
+</html>

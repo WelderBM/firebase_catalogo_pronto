@@ -5,39 +5,35 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <div class="login-container">
-    <h1>Entrar</h1>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Senha" />
-    <button id="loginButton">Entrar</button>
-    <p id="errorMessage"></p>
+    <h2>Login</h2>
+    <input id="email" type="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Senha" />
+    <button id="loginBtn">Entrar</button>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { firebaseConfig } from "../firebase-config.js";
+    import { firebaseConfig } from "./firebase-config.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    document.getElementById("loginButton").addEventListener("click", async () => {
+    document.getElementById("loginBtn").onclick = async () => {
       const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const errorMessage = document.getElementById("errorMessage");
-      errorMessage.textContent = "";
-
+      const pass = document.getElementById("password").value;
       try {
-        await signInWithEmailAndPassword(auth, email, password);
-        window.location.href = "index.html";
-      } catch (error) {
-        errorMessage.textContent = "Email ou senha inválidos";
+        await signInWithEmailAndPassword(auth, email, pass);
+        window.location.href = "folders.html";
+      } catch (e) {
+        alert("Erro ao entrar");
       }
-    });
+    };
   </script>
 </body>
 

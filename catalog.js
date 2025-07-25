@@ -1,80 +1,144 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "../firebase-config.js";
+import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { app } from './firebase-config.js';
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
+let currentFolderId = null;
 
-// Verifica se está logado
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return window.location.href = "login.html";
-  await loadFolders();
-});
+document.getElementById('jsonInput').addEventListener('change', handleJsonUpload);
 
-// Carrega pastas
-async function loadFolders() {
-  const folderList = document.getElementById("folderList");
-  folderList.innerHTML = "";
-  const querySnapshot = await getDocs(collection(db, "pastas"));
+function handleJsonUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
 
-  querySnapshot.forEach((docSnap) => {
-    const div = document.createElement("div");
-    div.className = "folder";
-    div.innerText = docSnap.id;
-    div.onclick = () => loadItems(docSnap.id);
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const data = JSON.parse(e.target.result);
+    renderFolders(data);
+  };
+  reader.readAsText(file);
+}
+
+function renderFolders(folders) {
+  const folderList = document.getElementById('folderList');
+  folderList.innerHTML = '';
+  currentFolderId = null;
+  document.getElementById('itemsContainer').innerHTML = '';
+  document.getElementById('backButton')?.remove();
+
+  folders.forEach(folder => {
+    const div = document.createElement('div');
+    div.className = 'folder-item';
+    div.textContent = folder.name;
+    div.onclick = () => enterFolder(folder.id);
     folderList.appendChild(div);
   });
 }
 
-// Carrega produtos da pasta clicada
-async function loadItems(folderId) {
-  const itemList = document.getElementById("itemList");
-  itemList.innerHTML = "";
-  const folderRef = doc(db, "pastas", folderId);
-  const folderSnap = await getDoc(folderRef);
+async function enterFolder(folderId) {
+  currentFolderId = folderId;
 
-  const data = folderSnap.data();
-  if (!data || !data.produtos) {
-    itemList.innerText = "Nenhum produto encontrado.";
-    return;
-  }
+  const folderList = document.getElementById('folderList');
+  folderList.innerHTML = '';
 
-  data.produtos.forEach((item) => {
-    const div = document.createElement("div");
-    div.className = "item";
-    div.innerHTML = `
-      <b>${item.title}</b><br>
-      ${item.description}<br>
-      <b>R$ ${item.price}</b><br>
-    `;
+  const backBtn = document.createElement('button');
+  backBtn.textContent = '← Voltar';
+  backBtn.className = 'back-button';
+  backBtn.id = 'backButton';
+  backBtn.onclick = () => {
+    currentFolderId = null;
+    document.getElementById('itemsContainer').innerHTML = '';
+    backBtn.remove();
+    loadFoldersFromFirestore();
+  };
+  folderList.parentElement.insertBefore(backBtn, folderList);
 
-    ["title", "description", "price"].forEach((key) => {
-      const btn = document.createElement("button");
-      btn.innerText = `Copiar ${key}`;
-      btn.onclick = () => navigator.clipboard.writeText(item[key]);
-      div.appendChild(btn);
-    });
+  const querySnapshot = await getDocs(collection(db, "folders", folderId, "Product"));
+  const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    itemList.appendChild(div);
+  renderItems(items);
+}
+
+function renderItems(items) {
+  const container = document.getElementById('itemsContainer');
+  container.innerHTML = '';
+
+  items.forEach(item => {
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'product-card';
+
+    const title = document.createElement('input');
+    title.value = item.title || '';
+    title.className = 'product-title';
+
+    const description = document.createElement('textarea');
+    description.value = item.description || '';
+    description.className = 'product-description';
+
+    const price = document.createElement('input');
+    price.value = item.price || '';
+    price.className = 'product-price';
+
+    const imageUrl = document.createElement('input');
+    imageUrl.value = item.imageUrl || '';
+    imageUrl.className = 'product-image-url';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = '📋 Copiar';
+    copyBtn.className = 'copy-button';
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(
+        `Título: ${title.value}\nDescrição: ${description.value}\nValor: ${price.value}`
+      );
+    };
+
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = '💾 Salvar';
+    saveBtn.className = 'save-button';
+    saveBtn.onclick = async () => {
+      const ref = doc(db, "folders", currentFolderId, "Product", item.id);
+      await updateDoc(ref, {
+        title: title.value,
+        description: description.value,
+        price: price.value,
+        imageUrl: imageUrl.value,
+      });
+      alert("Produto atualizado!");
+    };
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️ Excluir';
+    deleteBtn.className = 'delete-button';
+    deleteBtn.onclick = async () => {
+      if (!confirm("Tem certeza que deseja excluir este item?")) return;
+      const ref = doc(db, "folders", currentFolderId, "Product", item.id);
+      await deleteDoc(ref);
+      enterFolder(currentFolderId);
+    };
+
+    itemDiv.appendChild(title);
+    itemDiv.appendChild(description);
+    itemDiv.appendChild(price);
+    itemDiv.appendChild(imageUrl);
+    itemDiv.appendChild(copyBtn);
+    itemDiv.appendChild(saveBtn);
+    itemDiv.appendChild(deleteBtn);
+
+    container.appendChild(itemDiv);
   });
 }
 
-// Importar JSON com produtos
-document.getElementById("jsonInput").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const text = await file.text();
-  const json = JSON.parse(text);
-  if (!json.folderName || !json.products) return alert("Formato inválido");
+async function loadFoldersFromFirestore() {
+  const snapshot = await getDocs(collection(db, "folders"));
+  const folders = snapshot.docs.map(doc => ({
+    id: doc.id,
+    name: doc.data().name || 'Sem nome',
+  }));
+  renderFolders(folders);
+}
 
-  await setDoc(doc(db, "pastas", json.folderName), { produtos: json.products });
-  alert("Importado com sucesso!");
-  loadFolders();
-});
+window.addEventListener('DOMContentLoaded', loadFoldersFromFirestore);
 
-// Logout
-window.logout = () => {
-  signOut(auth).then(() => window.location.href = "login.html");
+window.logout = function () {
+  localStorage.removeItem('auth');
+  window.location.href = 'login.html';
 };
