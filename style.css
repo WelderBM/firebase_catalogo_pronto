@@ -1,0 +1,107 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f5f5f5;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #6200ea;
+  color: white;
+}
+
+.header button {
+  background: white;
+  color: #6200ea;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.content {
+  padding: 1rem;
+}
+
+.folder {
+  background: white;
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.item {
+  background: white;
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+input {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+}
+
+button {
+  margin: 0.25rem;
+  padding: 0.4rem 0.8rem;
+  background: #6200ea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.hidden {
+  display: none;
+}
+
+.empty-state {
+  text-align: center;
+  color: #999;
+}
+
+.empty-state img {
+  width: 100px;
+  margin-bottom: 1rem;
+}
+
+.import-section {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.info-section {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+#folderList {
+  min-height: 200px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.folder-loading {
+  opacity: 0.5;
+  font-size: 1.1rem;
+  color: #999;
+}

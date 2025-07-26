@@ -1,67 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pastas</title>
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pastas | Mix Novidades</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-    <div class="container">
-        <h1>Pastas</h1>
-        <input type="file" id="jsonInput" />
-        <div id="folderList" class="folder-list"></div>
-        <button id="logoutBtn" class="logout-btn">Sair</button>
+  <header class="header">
+    <h1>📁 Pastas</h1>
+    <button id="logoutBtn">Sair</button>
+  </header>
+
+  <main class="content">
+    <div id="folderList" class="folder-loading">Carregando pastas...</div>
+
+    <div id="folderList" class="folder-list"></div>
+    <div id="emptyState" class="empty-state hidden">
+      <img src="ghost.png" alt="Nada por aqui" />
+      <p>Nada por aqui. Tente importar um JSON com produtos.</p>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { firebaseConfig } from "./firebase-config.js";
+    <div class="import-section">
+      <button id="importBtn">Importar JSON</button>
+      <input type="file" id="jsonInput" class="hidden" accept=".json" />
+    </div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    <div class="info-section">
+      <p>Para ajuda, acesse o <a href="https://chatgpt.com/g/g-6883d81c72f081919676c26cc586bf4d-json-generator-by-image" target="_blank">nosso chat de geração de produtos por imagem</a>.</p>
+    </div>
+  </main>
 
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) return window.location.href = "login.html";
-            loadFolders();
-        });
-
-        async function loadFolders() {
-            const folderList = document.getElementById("folderList");
-            folderList.innerHTML = "";
-            const querySnapshot = await getDocs(collection(db, "pastas"));
-            querySnapshot.forEach((docSnap) => {
-                const folder = document.createElement("div");
-                folder.className = "folder";
-                folder.innerText = docSnap.id;
-                folder.onclick = () => {
-                    localStorage.setItem("selectedFolder", docSnap.id);
-                    window.location.href = "products.html";
-                };
-                folderList.appendChild(folder);
-            });
-        }
-
-        document.getElementById("logoutBtn").onclick = () => {
-            signOut(auth).then(() => window.location.href = "login.html");
-        };
-
-        document.getElementById("jsonInput").addEventListener("change", async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const text = await file.text();
-            const json = JSON.parse(text);
-            if (!json.folderName || !json.products) return alert("Formato inválido");
-            await setDoc(doc(db, "pastas", json.folderName), { produtos: json.products });
-            alert("Importado com sucesso!");
-            loadFolders();
-        });
-    </script>
+  <script type="module" src="folders.js"></script>
 </body>
-
 </html>

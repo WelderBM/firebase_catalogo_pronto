@@ -128,12 +128,52 @@ function renderItems(items) {
 }
 
 async function loadFoldersFromFirestore() {
-  const snapshot = await getDocs(collection(db, "folders"));
-  const folders = snapshot.docs.map(doc => ({
-    id: doc.id,
-    name: doc.data().name || 'Sem nome',
-  }));
-  renderFolders(folders);
+    const currentFolder = localStorage.getItem("currentFolder");
+    if (!currentFolder) return window.location.href = "folders.html";
+
+    document.getElementById("folderName").innerText = currentFolder;
+
+    const itemList = document.getElementById("itemList");
+    itemList.innerHTML = "Carregando produtos...";
+
+    try {
+      const folderRef = doc(db, "pastas", currentFolder);
+      const folderSnap = await getDoc(folderRef);
+      const data = folderSnap.data();
+
+      if (!data || !Array.isArray(data.produtos)) {
+        itemList.innerHTML = `
+        <div class="empty-state">
+          <img src="ghost.png" class="ghost-icon"/>
+          <p>Nenhum produto encontrado nesta pasta.</p>
+        </div>`;
+        return;
+      }
+
+      itemList.innerHTML = "";
+      data.produtos.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "item-card";
+
+        div.innerHTML = `
+        <input value="${item.title}" onchange="updateItem(${index}, 'title', this.value)">
+        <textarea onchange="updateItem(${index}, 'description', this.value)">${item.description}</textarea>
+        <input type="number" value="${item.price}" onchange="updateItem(${index}, 'price', this.value)">
+        <div class="copy-buttons">
+          <button onclick="copyText('${item.title}')">Copiar título</button>
+          <button onclick="copyText(\`${item.description}\`)">Copiar descrição</button>
+          <button onclick="copyText('${item.price}')">Copiar valor</button>
+        </div>
+        <button onclick="deleteItem(${index})" class="delete-btn">Excluir</button>
+      `;
+
+        itemList.appendChild(div);
+      });
+
+    } catch (e) {
+      console.error("Erro ao carregar produtos:", e);
+      itemList.innerHTML = "Erro ao carregar produtos.";
+    }
 }
 
 window.addEventListener('DOMContentLoaded', loadFoldersFromFirestore);
